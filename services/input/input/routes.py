@@ -23,9 +23,13 @@ async def get_user(token: str = Depends(oauth2_scheme)) -> Optional[dict]:
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                         detail="Invalid authentication credentials",
                         headers={"WWW-Authenticate": "Bearer"})
+class PokemonInput(BaseModel):
+    name: str
 
 class ProductInput(BaseModel):
     name: str
+    image: str
+    description: str
 
 @app.on_event("startup")
 async def startup_event():
@@ -34,11 +38,21 @@ async def startup_event():
     app.state.producer = Producer({'bootstrap.servers': env.get_kafka_broker()})
     logger.info("Connected to Kafka")
 
+@app.post("/input/add_pokemon")
+async def add_pokemon(pokemon: PokemonInput, user: dict = Depends(get_user)):
+    if not user:
+        raise HTTPException(status_code=400, detail="User not authenticated")
+    pokemon_data = {'id': str(uuid.uuid1()), 'name': pokemon.name, 'image': pokemon.image, 'description': pokemon.description }
+    producer: Producer = app.state.producer
+    producer.produce("products", value=json.dumps(pokemon_data))
+    producer.flush()
+    return {"status": "success", "id": pokemon_data['id']}
+
 @app.post("/input/add_product")
 async def add_product(product: ProductInput, user: dict = Depends(get_user)):
     if not user:
         raise HTTPException(status_code=400, detail="User not authenticated")
-    product = {'id': str(uuid.uuid1()), 'name': product.name}
+    product = {'id': str(uuid.uuid1()), 'name': product.name, 'image': product.image, 'description': product.description}
     producer: Producer = app.state.producer
     producer.produce("products", value=json.dumps(product))
     producer.flush()

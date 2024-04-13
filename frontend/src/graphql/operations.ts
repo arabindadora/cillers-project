@@ -1,25 +1,25 @@
 import { gql } from '@apollo/client';
 
-export const GET_PRODUCTS = gql`
-  query GetProducts {
-    products { name, id }
+export const GET_POKEMONS = gql`
+  query GetPokemons {
+    products { name, id, description, image}
   }
 `;
 
-export const ADD_PRODUCT = gql`
-  mutation AddProduct($name: String!) {
-    addProduct(name: $name) { name, id }
+export const ADD_POKEMON = gql`
+  mutation AddPokemon($name: String!) {
+    addPokemon(name: $name) { name, id }
   }
 `;
 
-export const REMOVE_PRODUCT = gql`
-  mutation RemoveProduct($id: String!) {
-    removeProduct(id: $id)
+export const REMOVE_POKEMON = gql`
+  mutation RemovePokemon($id: String!) {
+    removePokemon(id: $id)
   }
 `;
 
-export const PRODUCT_ADDED_SUBSCRIPTION = gql`
-  subscription OnProductAdded {
-    productAdded { name, id }
+export const POKEMON_ADDED_SUBSCRIPTION = gql`
+  subscription OnPokemonAdded {
+    pokemonAdded { name, id }
   }
 `;

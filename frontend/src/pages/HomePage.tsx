@@ -1,36 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_PRODUCTS, ADD_PRODUCT, REMOVE_PRODUCT, PRODUCT_ADDED_SUBSCRIPTION } from '../graphql/operations';
+import { GET_POKEMONS, ADD_POKEMON, REMOVE_POKEMON, POKEMON_ADDED_SUBSCRIPTION} from '../graphql/operations';
 import { getAccessToken, signOut } from '../services/authService';
+import PokemonCard from '../components/PokemonCard';
+import {Pokemon} from '../components/PokemonCard';
 
-interface Product {
-  id: string;
-  name: string;
-}
-
-interface GetProductsQuery {
-  products: Product[];
+interface GetPokemonQuery {
+  pokemons: Pokemon[];
 }
 
 const HomePage: React.FC = () => {
-  const [newProductText, setNewProductText] = useState('');
+  const [newPokemon, setNewPokemon] = useState('');
   const [pushToKafka, setPushToKafka] = useState(false);
-  const { data, loading, error, subscribeToMore } = useQuery(GET_PRODUCTS);
-  const [addProduct] = useMutation(ADD_PRODUCT);
-  const [removeProduct] = useMutation(REMOVE_PRODUCT);
+  const { data, loading, error, subscribeToMore } = useQuery(GET_POKEMONS);
+  const [addPokemon] = useMutation(ADD_POKEMON);
+  const [removePokemon] = useMutation(REMOVE_POKEMON);
 
   useEffect(() => {
     subscribeToMore({
-      document: PRODUCT_ADDED_SUBSCRIPTION,
+      document: POKEMON_ADDED_SUBSCRIPTION,
       updateQuery: (prev, { subscriptionData }) => {
         if (!subscriptionData.data) return prev;
-        const newProduct = subscriptionData.data.productAdded;
+        const newPokemon = subscriptionData.data.pokemonAdded;
 
-        if (prev.products.some((product: Product) => product.id === newProduct.id)) {
+        if (prev.pokemons.some((pokemon: Pokemon) => pokemon.id === newPokemon.id)) {
           return prev;
         }
         return Object.assign({}, prev, {
-          products: [...prev.products, newProduct]
+          pokemons: [...prev.pokemons, newPokemon]
         });
       },
     });
@@ -46,40 +43,40 @@ const HomePage: React.FC = () => {
   );
   if (error) return <p>{'Error: ' + error}</p>;
 
-  const handleAddProduct = async () => {
-    if (!newProductText.trim()) return;
+  const handleAddPokemon = async () => {
+    if (!newPokemon.trim()) return;
     if (pushToKafka) {
       const token = await getAccessToken();
-      const response = await fetch('/input/add_product', {
+      const response = await fetch('/input/add_pokemon', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify({ name: newProductText }),
+        body: JSON.stringify({ name: newPokemon }),
       });
       if (response.ok) {
-        setNewProductText('');
+        setNewPokemon('');
       } else {
         const errorText = await response.text();
-        console.error('Failed to add product:', errorText);
+        console.error('Failed to add pokemon:', errorText);
       }
     } else {
-      await addProduct({ variables: { name: newProductText } });
-      setNewProductText('');
+      await addPokemon({ variables: { name: newPokemon } });
+      setNewPokemon('');
     }
   };
 
-  const handleRemoveProduct = async (id: string) => {
-    await removeProduct({
+  const handleRemovePokemon = async (id: string) => {
+    await removePokemon({
       variables: { id },
       update(cache) {
-        const existingProducts = cache.readQuery<GetProductsQuery>({ query: GET_PRODUCTS });
-        if (existingProducts?.products) {
+        const existingProducts = cache.readQuery<GetPokemonQuery>({ query: GET_POKEMONS });
+        if (existingProducts?.pokemons) {
           cache.writeQuery({
-            query: GET_PRODUCTS,
+            query: GET_POKEMONS,
             data: {
-              products: existingProducts.products.filter(product => product.id !== id),
+              pokemons: existingProducts.pokemons.filter(pokemon => pokemon.id !== id),
             },
           });
         }
@@ -91,7 +88,7 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <div className="navbar bg-base-300 text-neutral-content">
         <div className="flex-1">
-          <a href="/" className="p-2 normal-case text-xl">GamersConnect</a>
+          <a href="/" className="p-2 normal-case text-xl">Home</a>
         </div>
         <div className="flex-none">
           <button className="btn" onClick={signOut}>
@@ -103,17 +100,17 @@ const HomePage: React.FC = () => {
       <div className="flex flex-grow justify-center items-center bg-neutral">
         <div className="card card-compact w-full max-w-lg bg-base-100 shadow-xl">
           <div className="card-body items-stretch text-center">
-            <h1 className="card-title self-center text-2xl font-bold mb-4">Product List</h1>
+            <h1 className="card-title self-center text-2xl font-bold mb-4">Search for pokemon</h1>
             <div className="form-control w-full">
               <div className="join">
                 <input
                   type="text"
-                  placeholder="Add new product..."
+                  placeholder="Add new pokemon..."
                   className="join-item flex-grow input input-bordered input-md input-primary"
-                  value={newProductText}
-                  onChange={(e) => setNewProductText(e.target.value)}
+                  value={newPokemon}
+                  onChange={(e) => setNewPokemon(e.target.value)}
                 />
-                <button className="join-item btn btn-square btn-md btn-primary" onClick={handleAddProduct}>
+                <button className="join-item btn btn-square btn-md btn-primary" onClick={handleAddPokemon}>
                   Add
                 </button>
               </div>
@@ -124,17 +121,8 @@ const HomePage: React.FC = () => {
               <label className="join-item label">Submit via Kafka</label>
             </div>
             <div className="space-y-2 w-full">
-              {data.products.map(({ name, id }: Product) => (
-                <div key={id} className="card card-compact w-full bg-base-200 flex-row items-center justify-between">
-                  <div className="card-body">
-                    <div className="flex justify-between items-center w-full">
-                      <span>{name}</span>
-                      <button className="btn btn-xs btn-circle btn-error" onClick={() => handleRemoveProduct(id)}>
-                        x
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              {data && Array.isArray(data.pokemons) && data.pokemons.map((pokemon: Pokemon) => (
+                <PokemonCard key={pokemon.id} pokemon={pokemon} />
               ))}
             </div>
           </div>

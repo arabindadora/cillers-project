@@ -14,22 +14,26 @@ logger = logging.getLogger(__name__)
 
 #### Context ####
 
+
 class Context(BaseContext):
     @cached_property
     def user(self) -> dict | None:
         if self.request:
             if auth_ := self.request.headers.get("Authorization"):
                 method, token = auth_.split(" ")
-                if method == 'Bearer':
+                if method == "Bearer":
                     if data := auth.decode_jwt(token):
                         return data
+
 
 async def get_context() -> Context:
     return Context()
 
+
 Info = _Info[Context, RootValueType]
 
 #### Auth ####
+
 
 class IsAuthenticated(BasePermission):
     message = "User is not authenticated."
@@ -37,19 +41,31 @@ class IsAuthenticated(BasePermission):
     def has_permission(self, source, info: Info, **kwargs):
         return info.context.user is not None
 
+
 #### Mutations ####
+
 
 @strawberry.type
 class Mutation:
     @strawberry.field(permission_classes=[IsAuthenticated])
-    async def add_product(self, name: str) -> db.Product:
-        return db.create_product(name)
+    async def add_product(self, name: str, image: str, description: str) -> db.Product:
+        return db.create_product(name, image, description)
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def remove_product(self, id: str) -> None:
         db.delete_product(id)
 
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def add_pokemon(self, name: str, image: str, description: str) -> db.Pokemon:
+        return db.create_pokemon(name, image, description)
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def remove_pokemon(self, id: str) -> None:
+        db.delete_pokemon(id)
+
+
 #### Queries ####
+
 
 @strawberry.type
 class Query:
@@ -57,12 +73,18 @@ class Query:
     def products(self) -> list[db.Product]:
         return db.list_products()
 
+    @strawberry.field
+    def pokemons(self) -> list[db.Pokemon]:
+        return db.list_pokemons()
+
+
 #### Subscriptions ####
+
 
 @strawberry.type
 class Subscription:
     @strawberry.subscription
-    async def product_added(self) -> AsyncGenerator[db.Product, None]:
+    async def pokemon_added(self) -> AsyncGenerator[db.Product, None]:
         # TODO: use a Kafka topic to avoid polling here
         seen = set(p.id for p in db.list_products())
         while True:
@@ -72,10 +94,12 @@ class Subscription:
                     yield p
             await asyncio.sleep(0.5)
 
+
 #### API ####
+
 
 def get_app():
     return GraphQLRouter(
         strawberry.Schema(Query, mutation=Mutation, subscription=Subscription),
-        context_getter=get_context
+        context_getter=get_context,
     )
