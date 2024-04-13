@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import PokemonCard from '../components/PokemonCard';
 import {getUser, signOut} from '../services/authService';
 
-const Pokemon: React.FC = () => {
+const PokemonPage: React.FC = () => {
   const [user, setUser] = useState<any>(null); //state to store user data
 
   useEffect(() => {
@@ -42,10 +42,12 @@ const Pokemon: React.FC = () => {
           </button>
         </div>
       </div>
-      <h2>Below is your pokemon:</h2>
+      <h2 className='flex justify-center' style={{marginTop: '120px'}}>Below is your pokemon:</h2>
+      <div className='flex justify-center mt-5'>
       <PokemonCard pokemon={pokemon} onAdd={handleAddPokemon} onCancel={handleCancel} />
+      </div>
     </div>
   );
 };
 
-export default Pokemon;
+export default PokemonPage;

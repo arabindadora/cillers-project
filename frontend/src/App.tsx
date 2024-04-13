@@ -5,7 +5,7 @@ import SignInCallbackPage from './pages/SignInCallbackPage';
 import PrivateRoute from './pages/PrivateRoute';
 import { loadErrorMessages, loadDevMessages } from "@apollo/client/dev";
 import UserProfile from './pages/UserProfile';
-import Pokemon from './pages/Pokemon';
+import PokemonPage from './pages/PokemonPage';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -17,7 +17,7 @@ const App: React.FC = () => {
         <Route path="/" element={<PrivateRoute />}>
           <Route index element={<HomePage />} />
           <Route path="/profile" element={<UserProfile/>} />
-          <Route path="/pokemon" element={<Pokemon/>} />
+          <Route path="/pokemon" element={<PokemonPage/>} />
         </Route>
       </Routes>
     </Router>
