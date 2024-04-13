@@ -91,7 +91,7 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <div className="navbar bg-base-300 text-neutral-content">
         <div className="flex-1">
-          <a href="/" className="p-2 normal-case text-xl">ProductLister</a>
+          <a href="/" className="p-2 normal-case text-xl">Home</a>
         </div>
         <div className="flex-none">
           <button className="btn" onClick={signOut}>
@@ -103,7 +103,7 @@ const HomePage: React.FC = () => {
       <div className="flex flex-grow justify-center items-center bg-neutral">
         <div className="card card-compact w-full max-w-lg bg-base-100 shadow-xl">
           <div className="card-body items-stretch text-center">
-            <h1 className="card-title self-center text-2xl font-bold mb-4">Product List</h1>
+            <h1 className="card-title self-center text-2xl font-bold mb-4">Search for pokemon</h1>
             <div className="form-control w-full">
               <div className="join">
                 <input
