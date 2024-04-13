@@ -8,7 +8,6 @@ from strawberry.types.info import RootValueType
 import logging
 import uuid
 from confluent_kafka import Producer
-import json
 
 from . import auth
 
@@ -64,17 +63,10 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry.field(permission_classes=[IsAuthenticated])
-    async def add_product(self, name: str, info: Info) -> None:
-        id = str(uuid.uuid1())
-        producer = info.context.producer
-        producer.produce("products", value=json.dumps({"id": id, "name": name}))
-        producer.flush()
-
-    @strawberry.field(permission_classes=[IsAuthenticated])
     async def add_pokemon(self, name: str, info: Info) -> None:
         id = str(uuid.uuid1())
         producer = info.context.producer
-        producer.produce("products", value=json.dumps({"id": id, "name": name}))
+        producer.produce("pokemons", value=json.dumps({"id": id, "name": name}))
         producer.flush()
 
 

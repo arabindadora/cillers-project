@@ -48,14 +48,6 @@ class IsAuthenticated(BasePermission):
 @strawberry.type
 class Mutation:
     @strawberry.field(permission_classes=[IsAuthenticated])
-    async def add_product(self, name: str, image: str, description: str) -> db.Product:
-        return db.create_product(name, image, description)
-
-    @strawberry.field(permission_classes=[IsAuthenticated])
-    async def remove_product(self, id: str) -> None:
-        db.delete_product(id)
-
-    @strawberry.field(permission_classes=[IsAuthenticated])
     async def add_pokemon(self, name: str, image: str, description: str) -> db.Pokemon:
         return db.create_pokemon(name, image, description)
 
@@ -70,10 +62,6 @@ class Mutation:
 @strawberry.type
 class Query:
     @strawberry.field
-    def products(self) -> list[db.Product]:
-        return db.list_products()
-
-    @strawberry.field
     def pokemons(self) -> list[db.Pokemon]:
         return db.list_pokemons()
 
@@ -84,11 +72,11 @@ class Query:
 @strawberry.type
 class Subscription:
     @strawberry.subscription
-    async def pokemon_added(self) -> AsyncGenerator[db.Product, None]:
+    async def pokemon_added(self) -> AsyncGenerator[db.Pokemon, None]:
         # TODO: use a Kafka topic to avoid polling here
-        seen = set(p.id for p in db.list_products())
+        seen = set(p.id for p in db.list_pokemons())
         while True:
-            for p in db.list_products():
+            for p in db.list_pokemons():
                 if p.id not in seen:
                     seen.add(p.id)
                     yield p

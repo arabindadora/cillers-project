@@ -10,7 +10,12 @@ interface GetPokemonQuery {
 }
 
 const HomePage: React.FC = () => {
-  const [newPokemon, setNewPokemon] = useState('');
+  const [newPokemonText, setNewPokemonText] = useState('');
+  const [newPokemon, setNewPokemon] = useState({
+    name: '',
+    description: '',
+    image: ''
+  });
   const [pushToKafka, setPushToKafka] = useState(false);
   const { data, loading, error, subscribeToMore } = useQuery(GET_POKEMONS);
   const [addPokemon] = useMutation(ADD_POKEMON);
@@ -44,7 +49,19 @@ const HomePage: React.FC = () => {
   if (error) return <p>{'Error: ' + error}</p>;
 
   const handleAddPokemon = async () => {
-    if (!newPokemon.trim()) return;
+    if (!newPokemonText.trim()) return;
+    // call pokeapi.co with newPokemonText to get the pokemon details
+    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${newPokemonText.toLowerCase()}`);
+    if (!response.ok) {
+      console.error('Failed to fetch pokemon details');
+      return;
+    }
+    const data = await response.json();
+    setNewPokemon({
+      name: data.name,
+      description: data.species.name,
+      image: data.sprites.front_default
+    });
     if (pushToKafka) {
       const token = await getAccessToken();
       const response = await fetch('/input/add_pokemon', {
@@ -53,17 +70,17 @@ const HomePage: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify({ name: newPokemon }),
+        body: JSON.stringify(newPokemon),
       });
       if (response.ok) {
-        setNewPokemon('');
+        setNewPokemonText('');
       } else {
         const errorText = await response.text();
         console.error('Failed to add pokemon:', errorText);
       }
     } else {
-      await addPokemon({ variables: { name: newPokemon } });
-      setNewPokemon('');
+      await addPokemon({ variables: { name: newPokemon.name, image: newPokemon.image, description: newPokemon.description } });
+      setNewPokemonText('');
     }
   };
 
@@ -71,12 +88,12 @@ const HomePage: React.FC = () => {
     await removePokemon({
       variables: { id },
       update(cache) {
-        const existingProducts = cache.readQuery<GetPokemonQuery>({ query: GET_POKEMONS });
-        if (existingProducts?.pokemons) {
+        const existingPokemons = cache.readQuery<GetPokemonQuery>({ query: GET_POKEMONS });
+        if (existingPokemons?.pokemons) {
           cache.writeQuery({
             query: GET_POKEMONS,
             data: {
-              pokemons: existingProducts.pokemons.filter(pokemon => pokemon.id !== id),
+              pokemons: existingPokemons.pokemons.filter(pokemon => pokemon.id !== id),
             },
           });
         }
@@ -107,8 +124,8 @@ const HomePage: React.FC = () => {
                   type="text"
                   placeholder="Add new pokemon..."
                   className="join-item flex-grow input input-bordered input-md input-primary"
-                  value={newPokemon}
-                  onChange={(e) => setNewPokemon(e.target.value)}
+                  value={newPokemonText}
+                  onChange={(e) => setNewPokemonText(e.target.value)}
                 />
                 <button className="join-item btn btn-square btn-md btn-primary" onClick={handleAddPokemon}>
                   Add

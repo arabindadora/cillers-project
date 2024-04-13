@@ -257,9 +257,9 @@ modules:
       username: admin
       password: password
       script: |
-        CREATE COLLECTION cillers._default.products IF NOT EXISTS;
+        CREATE COLLECTION cillers._default.pokemons IF NOT EXISTS;
         CREATE PRIMARY INDEX IF NOT EXISTS ON cillers;
-        CREATE PRIMARY INDEX IF NOT EXISTS ON cillers._default.products;
+        CREATE PRIMARY INDEX IF NOT EXISTS ON cillers._default.pokemons;
       retries: 20
   - id: kafka
     module: polytope/kafka
@@ -284,16 +284,16 @@ modules:
       image: gcr.io/arched-inkwell-420116/curl:latest
       host: kafka-connect
       connectors:
-        - name: couchbase-products-sink
+        - name: couchbase-pokemons-sink
           config:
-            name:                           couchbase-products-sink
+            name:                           couchbase-pokemons-sink
             connector.class:                com.couchbase.connect.kafka.CouchbaseSinkConnector
             tasks.max:                      '2'
-            topics:                         products
+            topics:                         pokemons
             couchbase.seed.nodes:           couchbase
             couchbase.bootstrap.timeout:    10s
             couchbase.bucket:               cillers
-            couchbase.default.collection:   _default.products
+            couchbase.default.collection:   _default.pokemons
             couchbase.document.id:          ${/id}
             couchbase.username:             admin
             couchbase.password:             password
